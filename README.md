@@ -40,9 +40,18 @@ you should see a successful response from the server.
 
 A Game has two players: `x` and `o`. Either player can go first, but the players **must** alternate.
 
-The Game grid is a matrix of dimensions `3x3`. Each request to the API specifies the player and the coordinate where they wish to move. A player cannot make a move on a populated grid square. 
+The Game grid is a matrix of dimensions `3x3`:
 
-A Game is won when a player gets three in a horizontal, vertical, or diagonal row. A Game can also end in a draw.
+| <!-- -->    | <!-- -->    |<!-- -->    |
+|-------------|-------------|-------------|
+| [1,1]         | [2,1]         | [3,1]        |
+| [1,2]         | [2,2]         | [3,2]        |
+| [1,3]         | [2,3]         | [3,3]        |
+| <!-- -->    | <!-- -->    |<!-- -->    |
+
+ Each request to the API specifies the player and the coordinate where they wish to move. A player cannot make a move to a populated grid square. 
+
+A Game is won when a player gets three in a horizontal, vertical, or diagonal row. A Game can also end in a draw if all grid squares are populated with no victor.
 
 
 # Endpoints
@@ -61,7 +70,7 @@ No authentication is required to access the endpoints.
 
 The `status` property of a Game can have the following values: `win`, `draw`, or `incomplete`. 
 
-A Game with a status of `win` will have a property of `victor` which can have a value of `x` or `o`. 
+A Game with a status of `win` will have also a property of `victor` which can have a value of `x` or `o`, depending on who won the Game.
 
 ## Move
 
@@ -69,13 +78,32 @@ A Game with a status of `win` will have a property of `victor` which can have a 
 - `GET /games/<id>/moves/<id>` - Retrieve a Move's information
 - `DELETE /games/<id>/moves/<id>` - Delete a Move
 
+Here is an example of a request to create a Move:
+
+`POST /games/1/moves`
+```
+{
+    "player": "o"
+    "coord": [2,2]
+}
+```
+Which would result in the following board:
+
+| <!-- -->    | <!-- -->    |<!-- -->    |
+|-------------|-------------|-------------|
+| -         | -         | -         |
+| -         | o         | -         |
+| -         | -         | -         |
+| <!-- -->    | <!-- -->    |<!-- -->    |
+
+
 If a move is illegal then the API will return a `400 Bad Request`.
 
 If a move results in an end state, the API will return a JSON object with a `status` property, e.g.:
 ```json 
 HTTP 200
 {
-    "id": <id>,
+    "id": <game_id>,
     "status": "win",
     "victor: "x"
 }
