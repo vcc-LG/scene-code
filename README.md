@@ -1,6 +1,6 @@
 # Introduction
 
-This is a Django application which opens an API to play tic-tac-toe.
+This is a Django application which creates an open API to allow a user to play tic-tac-toe.
 
 
 # Setup
@@ -32,55 +32,56 @@ python manage.py runserver
 
 Now when you browse to:
 
-[http://localhost:8000/](http://localhost:8000/)
+[http://localhost:8000/games/](http://localhost:8000/games/)
 
-you should see a successful response from the server.
+you should see an empty array displayed, indicating a successful response from the application.
 
 # Game rules
 
-A Game has two players: `x` and `o`. Either player can go first, but the players **must** alternate.
+A game has two players: `x` and `o`. Either player can go first, but the players must alternate.
 
 The Game grid is a matrix of dimensions `3x3`:
 
 | <!-- -->    | <!-- -->    |<!-- -->    |
 |-------------|-------------|-------------|
-| [1,1]         | [2,1]         | [3,1]        |
-| [1,2]         | [2,2]         | [3,2]        |
-| [1,3]         | [2,3]         | [3,3]        |
+| [0,0]         | [0,1]         | [0,2]        |
+| [1,0]         | [1,1]         | [1,2]        |
+| [2,0]         | [2,1]         | [2,2]        |
 | <!-- -->    | <!-- -->    |<!-- -->    |
 
- Each request to the API specifies the player and the coordinate where they wish to move. A player cannot make a move to a populated grid square. 
+ The body of a request to the API to perform a move specifies the player and the coordinate where they wish to move. A player cannot make a move to a populated grid square or to a square outside the game grid.
 
-A Game is won when a player gets three in a horizontal, vertical, or diagonal row. A Game can also end in a draw if all grid squares are populated with no victor.
+A game is won when a player gets three in a horizontal, vertical, or diagonal row. A game can also end in a draw if all grid squares are populated with no victor.
 
 
 # Endpoints
 
 The base URL is:
 
-[http://localhost:8000/tictactoe/api/](http://localhost:8000/tictactoe/api/)
+[http://localhost:8000/games/](http://localhost:8000/games/)
 
 No authentication is required to access the endpoints. 
 
 ## Games
 
-- `POST /games` - Create a new Game
-- `GET /games/<id>` - Retrieve a Game's information
-- `DELETE /games/<id>` - Delete a Game
+- `GET /games/` - Retrieve all games
+- `POST /games/` - Create a new game
+- `GET /games/<game_id>/` - Retrieve a game's details
+- `DELETE /games/<game_id>/` - Delete a game
 
-The `status` property of a Game can have the following values: `win`, `draw`, or `incomplete`. 
+The `status` property of a Game can have the following values: `win`, `draw`, or `incomplete`. A game is played by sending API requests to create moves.
 
-A Game with a status of `win` will have also a property of `victor` which can have a value of `x` or `o`, depending on who won the Game.
 
 ## Move
 
-- `POST /games/<id>/moves` - Create a new Move for a Game
-- `GET /games/<id>/moves/<id>` - Retrieve a Move's information
-- `DELETE /games/<id>/moves/<id>` - Delete a Move
+- `GET /games/<game_id>/moves/` - Retrieve all moves for a game
+- `POST /games/<game_id>/moves/` - Create a move for a game
+- `GET /games/<game_id>/moves/<move_id>/` - Retrieve a move's details
+- `DELETE /games/<game_id>/moves/<move_id>/` - Delete a move
 
-Here is an example of a request to create a Move:
+Here is an example of a request to create a move:
 
-`POST /games/1/moves`
+`POST /games/1/moves/`
 ```
 {
     "player": "o"
@@ -92,23 +93,12 @@ Which would result in the following board:
 | <!-- -->    | <!-- -->    |<!-- -->    |
 |-------------|-------------|-------------|
 | -         | -         | -         |
-| -         | o         | -         |
 | -         | -         | -         |
+| -         | -         | o         |
 | <!-- -->    | <!-- -->    |<!-- -->    |
 
 
-If a move is illegal then the API will return a `400 Bad Request`.
-
-If a move results in an end state, the API will return a JSON object with a `status` property, e.g.:
-```json 
-HTTP 200
-{
-    "id": <game_id>,
-    "status": "win",
-    "victor: "x"
-}
-```
-
+If a move is illegal then the API will return a `400 Bad Request` and a helpful error message.
 
 # Tests
 

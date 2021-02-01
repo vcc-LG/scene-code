@@ -53,6 +53,9 @@ class Game(models.Model):
             if np.isin(3, np.sum(np.diag(np.fliplr(self.grid_array)) == player, where=[True])):
                 self.status = Status.WIN
                 self.save()
+            if np.sum(self.grid_array == '', where=[True]) == 0:
+                self.status = Status.DRAW
+                self.save()                
 
     @property
     def grid_array(self):
