@@ -1,6 +1,5 @@
-import ipdb
 from rest_framework import serializers
-from .models import Game, Move, Players
+from .models import Game, Move
 import numpy as np
 from .utils import empty_game_grid, coord_array_from_string
 
@@ -28,22 +27,29 @@ class MoveSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         return Move.objects.create(**validated_data)
 
+    def validate_player(self, value):
+        game = Game.objects.get(pk=self.initial_data['game'])
+        if game.previous_player() == value:
+            raise serializers.ValidationError("Incorrect player order")
+        return value
+
     def validate_coords(self, value):
         try:
             coords = coord_array_from_string(value)
         except:
             raise serializers.ValidationError("Could not parse coordinates")
 
-        if not self.coords_legal(coords):
+        if not self.coords_in_grid(coords):
             raise serializers.ValidationError(
                 "Coordinates are outside game grid")
         if not self.coords_unoccupied(coords):
             raise serializers.ValidationError("Coordinates are occupied")
         return value
 
-    def coords_legal(self, coords):
+    def coords_in_grid(self, coords):
         try:
-            return True if not empty_game_grid()[coords[0]][coords[1]] else False
+            empty_game_grid()[coords[0]][coords[1]]
+            return True
         except IndexError:
             return False
 

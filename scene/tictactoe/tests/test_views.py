@@ -1,9 +1,9 @@
-import ipdb
 from rest_framework.test import APITestCase
 from rest_framework import status
-from ..models import Game, Move
+from ..models import Game, Move, Status
 from django.urls import reverse
 import numpy as np
+import json
 
 class GameTests(APITestCase):
     def test_get_games_index_success(self):
@@ -37,7 +37,90 @@ class GameTests(APITestCase):
         response = self.client.delete(reverse('games-detail', args=(999,)))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+    def test_game_status_o_win_horz(self):
+        self.client.post('/games/')
+        game = Game.objects.last()
+        move_1 = {'player': 'o', 'coords': '[0,1]'}
+        self.client.post(
+            reverse('moves-index', kwargs={'pk_game': game.id}), move_1, format='json')
+        move_2 = {'player': 'x', 'coords': '[0,0]'}
+        self.client.post(
+            reverse('moves-index', kwargs={'pk_game': game.id}), move_2, format='json')
+        move_3 = {'player': 'o', 'coords': '[1,1]'}
+        self.client.post(
+            reverse('moves-index', kwargs={'pk_game': game.id}), move_3, format='json')
+        move_4 = {'player': 'x', 'coords': '[1,0]'}
+        self.client.post(
+            reverse('moves-index', kwargs={'pk_game': game.id}), move_4, format='json')
+        move_5 = {'player': 'o', 'coords': '[2,1]'}
+        self.client.post(
+            reverse('moves-index', kwargs={'pk_game': game.id}), move_5, format='json')
+        game.refresh_from_db()
+        self.assertEqual(game.status, Status.WIN)
 
+    def test_game_status_x_win_vert(self):
+        self.client.post('/games/')
+        game = Game.objects.last()
+        move_1 = {'player': 'x', 'coords': '[0,0]'}
+        self.client.post(
+            reverse('moves-index', kwargs={'pk_game': game.id}), move_1, format='json')
+        move_2 = {'player': 'o', 'coords': '[1,0]'}
+        self.client.post(
+            reverse('moves-index', kwargs={'pk_game': game.id}), move_2, format='json')
+        move_3 = {'player': 'x', 'coords': '[0,1]'}
+        self.client.post(
+            reverse('moves-index', kwargs={'pk_game': game.id}), move_3, format='json')
+        move_4 = {'player': 'o', 'coords': '[2,0]'}
+        self.client.post(
+            reverse('moves-index', kwargs={'pk_game': game.id}), move_4, format='json')
+        move_5 = {'player': 'x', 'coords': '[0,2]'}
+        self.client.post(
+            reverse('moves-index', kwargs={'pk_game': game.id}), move_5, format='json')
+        game.refresh_from_db()
+        self.assertEqual(game.status, Status.WIN)
+        
+    def test_game_status_x_win_diag(self):
+        self.client.post('/games/')
+        game = Game.objects.last()
+        move_1 = {'player': 'x', 'coords': '[0,0]'}
+        self.client.post(
+            reverse('moves-index', kwargs={'pk_game': game.id}), move_1, format='json')
+        move_2 = {'player': 'o', 'coords': '[1,0]'}
+        self.client.post(
+            reverse('moves-index', kwargs={'pk_game': game.id}), move_2, format='json')
+        move_3 = {'player': 'x', 'coords': '[1,1]'}
+        self.client.post(
+            reverse('moves-index', kwargs={'pk_game': game.id}), move_3, format='json')
+        move_4 = {'player': 'o', 'coords': '[2,0]'}
+        self.client.post(
+            reverse('moves-index', kwargs={'pk_game': game.id}), move_4, format='json')
+        move_5 = {'player': 'x', 'coords': '[2,2]'}
+        self.client.post(
+            reverse('moves-index', kwargs={'pk_game': game.id}), move_5, format='json')
+        game.refresh_from_db()
+        self.assertEqual(game.status, Status.WIN)
+
+    def test_game_status_x_win_diag(self):
+        self.client.post('/games/')
+        game = Game.objects.last()
+        move_1 = {'player': 'x', 'coords': '[0,2]'}
+        self.client.post(
+            reverse('moves-index', kwargs={'pk_game': game.id}), move_1, format='json')
+        move_2 = {'player': 'o', 'coords': '[1,0]'}
+        self.client.post(
+            reverse('moves-index', kwargs={'pk_game': game.id}), move_2, format='json')
+        move_3 = {'player': 'x', 'coords': '[1,1]'}
+        self.client.post(
+            reverse('moves-index', kwargs={'pk_game': game.id}), move_3, format='json')
+        move_4 = {'player': 'o', 'coords': '[2,2]'}
+        self.client.post(
+            reverse('moves-index', kwargs={'pk_game': game.id}), move_4, format='json')
+        move_5 = {'player': 'x', 'coords': '[2,0]'}
+        self.client.post(
+            reverse('moves-index', kwargs={'pk_game': game.id}), move_5, format='json')
+        game.refresh_from_db()
+        self.assertEqual(game.status, Status.WIN)
+        
 class MoveTests(APITestCase):
     def setUp(self):
         self.client.post('/games/')
@@ -57,9 +140,9 @@ class MoveTests(APITestCase):
         self.assertEqual(self.game.moves.count(), 1)
 
     def test_post_moves_index_updates_game_grid_array(self):
-        coords = [1,1]
+        coords = [1, 1]
         data = {'player': 'o', 'coords': str(coords)}
-        response = self.client.post(
+        self.client.post(
             reverse('moves-index', kwargs={'pk_game': self.game.id}), data, format='json')
         self.game.refresh_from_db()
         self.assertEqual(np.where(self.game.grid_array == 'o')[0], coords[0])
@@ -77,7 +160,16 @@ class MoveTests(APITestCase):
             reverse('moves-index', kwargs={'pk_game': self.game.id}), data, format='json')
         data = {'player': 'x', 'coords': '[1,1]'}
         response = self.client.post(
-            reverse('moves-index', kwargs={'pk_game': self.game.id}), data, format='json') 
+            reverse('moves-index', kwargs={'pk_game': self.game.id}), data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_post_moves_index_create_player_order_error(self):
+        data = {'player': 'o', 'coords': '[1,1]'}
+        self.client.post(
+            reverse('moves-index', kwargs={'pk_game': self.game.id}), data, format='json')
+        data = {'player': 'o', 'coords': '[1,2]'}
+        response = self.client.post(
+            reverse('moves-index', kwargs={'pk_game': self.game.id}), data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_get_moves_detail_success(self):

@@ -1,5 +1,4 @@
 import numpy as np
-import json
 
 def empty_game_grid(rows=3, cols=3):
     grid_array = np.chararray((rows, cols),unicode=True)

@@ -1,14 +1,8 @@
-from django.http import HttpResponse, JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-import ipdb
-from rest_framework.parsers import JSONParser
-from .models import Game, Move, Players
+from .models import Game, Move
 from .serializers import GameSerializer, MoveSerializer
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-import numpy as np
-# from .utils import player_from_string
 
 '''
 /games/
@@ -70,6 +64,7 @@ def move_list(request, pk_game):
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             game.update_grid()
+            game.update_status()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -93,5 +88,3 @@ def move_detail(request, pk_game, pk_move):
     elif request.method == 'DELETE':
         move.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
