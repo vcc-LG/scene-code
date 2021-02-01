@@ -3,11 +3,11 @@ import ipdb
 from model_utils.fields import StatusField
 from model_utils import Choices
 from django.utils.translation import gettext_lazy as _
-from .utils import empty_game_grid, default_coords
+from .utils import empty_game_grid, coord_array_from_string
 import json
 import numpy as np
 from django.core.exceptions import ValidationError
-
+import ast
 
 class Status(models.TextChoices):
     INCOMPLETE = 'IN', 'Incomplete'
@@ -28,13 +28,6 @@ class Game(models.Model):
     )
     grid = models.CharField(max_length=100, default=empty_game_grid)
 
-
-    # def grid_coord_legal(self, coords):
-    #     try:
-    #         return True if not self.grid_array[coords[0]][coords[1]] else False
-    #     except IndexError:
-    #         return False
-
     def previous_player(self):
         moves = self.move_set.all()
         if len(moves)>1:
@@ -42,14 +35,18 @@ class Game(models.Model):
         else:
             return None
 
-    # def update_grid(self, move):
-    #     coord_array = move.coord_array
-    #     self.grid_array[coord_array[0]][coord_array[1]] = move.player.value
+    def update_grid(self):
+        move = self.moves.last()
+        coord_array = coord_array_from_string(move.coords)
+        grid_array = self.grid_array
+        grid_array[coord_array[0]][coord_array[1]] = move.player
+        self.grid = grid_array.tolist()
+        self.save()
+        
 
-    # @property
-    # def grid_array(self):
-    #     grid_list = json.loads(self.grid)['grid']
-    #     return np.array(grid_list)
+    @property
+    def grid_array(self):
+        return np.array(ast.literal_eval(self.grid),dtype=str)
 
 
 class Move(models.Model):
